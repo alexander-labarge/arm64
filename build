@@ -12,7 +12,7 @@ git config --global user.email "alex@labarge.dev"
 rustup target add aarch64-unknown-linux-gnu
 
 # Install the AArch64 cross-compiler (Debian/Ubuntu)
-sudo apt-get install gcc-aarch64-linux-gnu -y
+sudo apt-get install gcc-aarch64-linux-gnu sshpass -y
 
 # Remove existing configuration files to avoid conflicts
 rm -f ~/.cargo/config ~/.cargo/config.toml
@@ -35,6 +35,15 @@ cargo build --release --target=aarch64-unknown-linux-gnu
 # Moving the compiled binaries to the current directory with appropriate names
 mv target/release/pi_installer pi_installer_amd64
 mv target/aarch64-unknown-linux-gnu/release/pi_installer pi_installer_arm64
+
+# Copy the binary to the remote system
+REMOTE_USER="skywalker"
+REMOTE_HOST="192.168.50.11"
+REMOTE_DIR="/home/skywalker/pi_installer"
+REMOTE_PASSWORD="skywalker"
+
+echo "Copying the binary to the remote system..."
+sshpass -p "$REMOTE_PASSWORD" scp ./pi_installer_arm64 $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR
 
 # Testing the pi_installer with sudo and --help for the detected architecture
 ARCH=$(uname -m)

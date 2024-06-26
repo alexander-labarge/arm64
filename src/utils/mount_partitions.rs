@@ -7,7 +7,7 @@ pub fn mount_partitions(mount_dir: &str, target_drive: &str) {
         ""
     };
 
-    let root_partition = format!("{}{}3", target_drive, partition_suffix);
+    // let root_partition = format!("{}{}3", target_drive, partition_suffix);
     let boot_partition = format!("{}{}1", target_drive, partition_suffix);
     let boot_dir_path = format!("{}/boot", mount_dir);
 
@@ -20,18 +20,6 @@ pub fn mount_partitions(mount_dir: &str, target_drive: &str) {
 
     if !mkdir_boot_output.status.success() {
         eprintln!("Failed to create /boot directory: {}", String::from_utf8_lossy(&mkdir_boot_output.stderr));
-        exit(1);
-    }
-
-    // Mount the root partition
-    let mount_output = Command::new("mount")
-        .arg(&root_partition)
-        .arg(mount_dir)
-        .output()
-        .expect("Failed to execute mount");
-
-    if !mount_output.status.success() {
-        eprintln!("Failed to mount root partition: {}", String::from_utf8_lossy(&mount_output.stderr));
         exit(1);
     }
 

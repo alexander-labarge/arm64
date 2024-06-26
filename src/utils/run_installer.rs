@@ -62,7 +62,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     let target_device = params.get("--target_drive").unwrap_or(&"/dev/sda".to_string()).to_string();
     let boot_size = params.get("--boot_size").unwrap_or(&"1G".to_string()).to_string();
     let swap_size = params.get("--swap_size").unwrap_or(&"8G".to_string()).to_string();
-    let stage3_url = params.get("--stage3_url").unwrap_or(&"https://distfiles.gentoo.org/releases/arm64/autobuilds/latest-stage3-arm64-desktop-openrc.tar.xz".to_string()).to_string();
+    let stage3_url = params.get("--stage3_url").unwrap_or(&"https://distfiles.gentoo.org/releases/arm64/autobuilds/20240623T231913Z/stage3-arm64-desktop-openrc-20240623T231913Z.tar.xz".to_string()).to_string();
     let portage_snapshot_url = params.get("--portage_snapshot_url").unwrap_or(&"https://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2".to_string()).to_string();
     let root_password_hash = params.get("--root_password_hash").unwrap_or(&"$6$.KYgMi02hVG4MNRk$1y6XS8QuIWEsqZNj6VFL9q9vMbItPkzPRi.Uh4/iiPIihsrx7ky23Rrwt.44IrkA76cx2HOrxrrMOOvz6TK6A/".to_string()).to_string(); // pw == skywalker
     let cmdline_console = params.get("--cmdline_console").unwrap_or(&"console=serial0,115200 console=tty1".to_string()).to_string();
@@ -171,11 +171,11 @@ pub fn run_installer(params: HashMap<String, String>) {
     // Format partitions
     format_partitions::format_partitions(&target_device);
 
-    // Mount partitions
-    mount_partitions(mount_dir, &target_device);
-
     // Install Gentoo base system
     install_gentoo::install_gentoo(&stage3_url, mount_dir, &target_device);
+
+    // Mount partitions
+    mount_partitions(mount_dir, &target_device);
 
     // Install Portage snapshot
     install_portage_snapshot::install_portage_snapshot(&portage_snapshot_url, mount_dir);
