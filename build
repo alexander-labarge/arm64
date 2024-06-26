@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Ensure the script is executed from the correct directory
+SCRIPT_DIR="/home/skywalker/programming/gentoo/arm64/raspberry_pi_5/pi_installer"
+cd "$SCRIPT_DIR"
+
+# Configuring Git user name and email globally
+git config --global user.name "Alexander La Barge"
+git config --global user.email "alex@labarge.dev"
+
+# Building the project using Cargo for the release profile
+echo "Building the project..."
+cargo build --release
+
+# Moving the compiled binary to the current directory
+mv target/release/pi_installer .
+
+# Running the pi_installer with sudo and --help
+echo "Testing the help function..."
+sudo ./pi_installer --help
