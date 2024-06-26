@@ -2,18 +2,16 @@ use colored::*;
 
 pub fn print_logo() {
     let ascii_art = r#"
-    =================================================================================================
-    _______   __          _______          ______                        __                         
-    |       \ |  \        |       \        /      \                      |  \                        
-    | $$$$$$$\ \$$        | $$$$$$$       |  $$$$$$\  ______   _______  _| $$_     ______    ______  
-    | $$__/ $$|  \ ______ | $$____        | $$ __\$$ /      \ |       \|   $$ \   /      \  /      \ 
-    | $$    $$| $$|      \| $$    \       | $$|    \|  $$$$$$\| $$$$$$$\\$$$$$$  |  $$$$$$\|  $$$$$$\
-    | $$$$$$$ | $$ \$$$$$$ \$$$$$$$\      | $$ \$$$$| $$    $$| $$  | $$ | $$ __ | $$  | $$| $$  | $$
-    | $$      | $$        |  \__| $$      | $$__| $$| $$$$$$$$| $$  | $$ | $$|  \| $$__/ $$| $$__/ $$
-    | $$      | $$         \$$    $$       \$$    $$ \$$     \| $$  | $$  \$$  $$ \$$    $$ \$$    $$
-     \$$       \$$          \$$$$$$         \$$$$$$   \$$$$$$$ \$$   \$$   \$$$$   \$$$$$$   \$$$$$$ 
+    ===================================================================================
 
-    =================================================================================================
+    ██████╗ ██╗      ███████╗     ██████╗ ███████╗███╗   ██╗████████╗ ██████╗  ██████╗ 
+    ██╔══██╗██║      ██╔════╝    ██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔═══██╗
+    ██████╔╝██║█████╗███████╗    ██║  ███╗█████╗  ██╔██╗ ██║   ██║   ██║   ██║██║   ██║
+    ██╔═══╝ ██║╚════╝╚════██║    ██║   ██║██╔══╝  ██║╚██╗██║   ██║   ██║   ██║██║   ██║
+    ██║     ██║      ███████║    ╚██████╔╝███████╗██║ ╚████║   ██║   ╚██████╔╝╚██████╔╝
+    ╚═╝     ╚═╝      ╚══════╝     ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝  ╚═════╝ 
+
+    ===================================================================================
     "#;
 
     let title = "Raspberry Pi 5: Gentoo Installer";
@@ -50,7 +48,7 @@ pub fn display_help() {
     println!("  {:<30} {}", "--config_usb_power".bold().cyan(), "The USB power parameter for config.txt (default: usb_max_current_enable=1)".bold().white());
     println!("  {:<30} {}", "--username".bold().cyan(), "The username to create (default: skywalker)".bold().white());
     println!("  {:<30} {}", "--password".bold().cyan(), "The password for the created user (default: skywalker)".bold().white());
-    println!("  {:<30} {}", "--extra_packages".bold().cyan(), "Additional packages to install in the Gentoo system (default: \"\")".bold().white());
+    println!("  {:<30} {}", "--extra_packages".bold().cyan(), "Additional packages to install in the Gentoo system (default: dev-vcs/git app-editors/vim)".bold().white());
     println!("  {:<30} {}", "--timezone".bold().cyan(), "Timezone to set (default: America/New_York)".bold().white());
     println!("  {:<30} {}", "--automate".bold().cyan(), "Automatically confirm all prompts (default: n)".bold().white());
     println!();

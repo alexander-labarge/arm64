@@ -14,8 +14,8 @@ use crate::utils::{
     copy_firmware,
     setup_symlinks,
     create_fstab,
-    chroot_setup::chroot_setup, // function only available in this module
-    display_help::print_logo, // make sure print_logo is imported
+    chroot_setup::chroot_setup,
+    display_help::print_logo,
 };
 
 pub fn run_installer(params: HashMap<String, String>) {
@@ -29,8 +29,8 @@ pub fn run_installer(params: HashMap<String, String>) {
     let stage3_url = params.get("--stage3_url").unwrap_or(&"https://distfiles.gentoo.org/releases/arm64/autobuilds/latest-stage3-arm64-desktop-openrc.tar.xz".to_string()).to_string();
     let portage_snapshot_url = params.get("--portage_snapshot_url").unwrap_or(&"https://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2".to_string()).to_string();
     let root_password_hash = params.get("--root_password_hash").unwrap_or(&"$6$.KYgMi02hVG4MNRk$1y6XS8QuIWEsqZNj6VFL9q9vMbItPkzPRi.Uh4/iiPIihsrx7ky23Rrwt.44IrkA76cx2HOrxrrMOOvz6TK6A/".to_string()).to_string(); // pw == skywalker
-    let cmdline_console = params.get("--cmdline_console").unwrap_or(&"console=ttyAMA0,115200".to_string()).to_string();
-    let cmdline_extra = params.get("--cmdline_extra").unwrap_or(&"dwc_otg.lpm_enable=0 rootfstype=ext4 rootwait cma=256M@256M net.ifnames=0".to_string()).to_string();
+    let cmdline_console = params.get("--cmdline_console").unwrap_or(&"console=serial0,115200 console=tty1".to_string()).to_string();
+    let cmdline_extra = params.get("--cmdline_extra").unwrap_or(&"rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles".to_string()).to_string();
     let config_audio = params.get("--config_audio").unwrap_or(&"dtparam=audio=on".to_string()).to_string();
     let config_overlay = params.get("--config_overlay").unwrap_or(&"dtoverlay=vc4-kms-v3d".to_string()).to_string();
     let config_max_framebuffers = params.get("--config_max_framebuffers").unwrap_or(&"max_framebuffers=2".to_string()).to_string();
