@@ -11,7 +11,7 @@ pub mod install_gentoo;
 pub mod install_kernel_firmware;
 pub mod install_portage_snapshot;
 pub mod install_tools;
+pub mod run_installer;
 pub mod setup_boot_config;
 pub mod setup_symlinks;
 pub mod unmount;
-pub mod run_installer;

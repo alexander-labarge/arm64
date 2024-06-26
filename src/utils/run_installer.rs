@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use colored::*;
+
 use crate::utils::{
     unmount,
     install_tools,
@@ -17,7 +18,7 @@ use crate::utils::{
 };
 
 pub fn run_installer(params: HashMap<String, String>) {
-    // Get configuration with default values
+    // Extracting parameters with default values
     let hostname = params.get("--hostname").unwrap_or(&"gentoo-pi5-router".to_string()).to_string();
     let target_device = params.get("--target_drive").unwrap_or(&"/dev/sda".to_string()).to_string();
     let boot_size = params.get("--boot_size").unwrap_or(&"1G".to_string()).to_string();
@@ -66,44 +67,58 @@ pub fn run_installer(params: HashMap<String, String>) {
     let nvme_luks_password_file = "/opt/nvme_luks_password.txt";
 
     // Display the configuration
-    println!("{}", format!("\nConfiguration:\n").bold().yellow());
-    println!("  {:<30} {}", "hostname".bold().cyan(), hostname.green());
-    println!("  {:<30} {}", "target_drive".bold().cyan(), target_device.green());
-    println!("  {:<30} {}", "mount_dir".bold().cyan(), mount_dir.green());
-    println!("  {:<30} {}", "boot_partition".bold().cyan(), boot_partition.green());
-    println!("  {:<30} {}", "swap_partition".bold().cyan(), swap_partition.green());
-    println!("  {:<30} {}", "root_partition".bold().cyan(), root_partition.green());
-    println!("  {:<30} {}", "stage3_url".bold().cyan(), stage3_url.green());
-    println!("  {:<30} {}", "firmware_repo".bold().cyan(), firmware_repo.green());
-    println!("  {:<30} {}", "nonfree_repo".bold().cyan(), nonfree_repo.green());
-    println!("  {:<30} {}", "bluez_repo".bold().cyan(), bluez_repo.green());
-    println!("  {:<30} {}", "boot_dir".bold().cyan(), boot_dir.green());
-    println!("  {:<30} {}", "cmdline_txt".bold().cyan(), cmdline_txt.green());
-    println!("  {:<30} {}", "config_txt".bold().cyan(), config_txt.green());
-    println!("  {:<30} {}", "root_password_hash".bold().cyan(), root_password_hash.green());
-    println!("  {:<30} {}", "shadow_file".bold().cyan(), shadow_file.green());
-    println!("  {:<30} {}", "sshd_config_file".bold().cyan(), sshd_config_file.green());
-    println!("  {:<30} {}", "nvme_luks_password".bold().cyan(), nvme_luks_password.green());
-    println!("  {:<30} {}", "nvme_luks_password_file".bold().cyan(), nvme_luks_password_file.green());
-    println!("  {:<30} {}", "boot_size".bold().cyan(), boot_size.green());
-    println!("  {:<30} {}", "swap_size".bold().cyan(), swap_size.green());
-    println!("  {:<30} {}", "portage_snapshot_url".bold().cyan(), portage_snapshot_url.green());
-    println!("  {:<30} {}", "cmdline_console".bold().cyan(), cmdline_console.green());
-    println!("  {:<30} {}", "cmdline_extra".bold().cyan(), cmdline_extra.green());
-    println!("  {:<30} {}", "config_audio".bold().cyan(), config_audio.green());
-    println!("  {:<30} {}", "config_overlay".bold().cyan(), config_overlay.green());
-    println!("  {:<30} {}", "config_max_framebuffers".bold().cyan(), config_max_framebuffers.green());
-    println!("  {:<30} {}", "config_fw_kms_setup".bold().cyan(), config_fw_kms_setup.green());
-    println!("  {:<30} {}", "config_64bit".bold().cyan(), config_64bit.green());
-    println!("  {:<30} {}", "config_overscan".bold().cyan(), config_overscan.green());
-    println!("  {:<30} {}", "config_arm_boost".bold().cyan(), config_arm_boost.green());
-    println!("  {:<30} {}", "config_otg_mode".bold().cyan(), config_otg_mode.green());
-    println!("  {:<30} {}", "config_pcie".bold().cyan(), config_pcie.green());
-    println!("  {:<30} {}", "config_pcie_gen".bold().cyan(), config_pcie_gen.green());
-    println!("  {:<30} {}", "config_usb_power".bold().cyan(), config_usb_power.green());
-    println!("  {:<30} {}", "username".bold().cyan(), username.green());
-    println!("  {:<30} {}", "password".bold().cyan(), password.green());
-    println!("  {:<30} {}", "extra_packages".bold().cyan(), extra_packages.green());
+    println!("{}", format!("\nConfiguration:\n").bold().green());
+    println!("  {:<30} {}", "hostname".bold().green(), hostname);
+    println!("  {:<30} {}", "target_drive".bold().green(), target_device);
+    println!("  {:<30} {}", "mount_dir".bold().green(), mount_dir);
+    println!("  {:<30} {}", "boot_partition".bold().green(), boot_partition);
+    println!("  {:<30} {}", "swap_partition".bold().green(), swap_partition);
+    println!("  {:<30} {}", "root_partition".bold().green(), root_partition);
+    println!("  {:<30} {}", "stage3_url".bold().green(), stage3_url);
+    println!("  {:<30} {}", "firmware_repo".bold().green(), firmware_repo);
+    println!("  {:<30} {}", "nonfree_repo".bold().green(), nonfree_repo);
+    println!("  {:<30} {}", "bluez_repo".bold().green(), bluez_repo);
+    println!("  {:<30} {}", "boot_dir".bold().green(), boot_dir);
+    println!("  {:<30} {}", "cmdline_txt".bold().green(), cmdline_txt);
+    println!("  {:<30} {}", "config_txt".bold().green(), config_txt);
+    println!("  {:<30} {}", "root_password_hash".bold().green(), root_password_hash);
+    println!("  {:<30} {}", "shadow_file".bold().green(), shadow_file);
+    println!("  {:<30} {}", "sshd_config_file".bold().green(), sshd_config_file);
+    println!("  {:<30} {}", "nvme_luks_password".bold().green(), nvme_luks_password);
+    println!("  {:<30} {}", "nvme_luks_password_file".bold().green(), nvme_luks_password_file);
+    println!("  {:<30} {}", "boot_size".bold().green(), boot_size);
+    println!("  {:<30} {}", "swap_size".bold().green(), swap_size);
+    println!("  {:<30} {}", "portage_snapshot_url".bold().green(), portage_snapshot_url);
+    println!("  {:<30} {}", "cmdline_console".bold().green(), cmdline_console);
+    println!("  {:<30} {}", "cmdline_extra".bold().green(), cmdline_extra);
+    println!("  {:<30} {}", "config_audio".bold().green(), config_audio);
+    println!("  {:<30} {}", "config_overlay".bold().green(), config_overlay);
+    println!("  {:<30} {}", "config_max_framebuffers".bold().green(), config_max_framebuffers);
+    println!("  {:<30} {}", "config_fw_kms_setup".bold().green(), config_fw_kms_setup);
+    println!("  {:<30} {}", "config_64bit".bold().green(), config_64bit);
+    println!("  {:<30} {}", "config_overscan".bold().green(), config_overscan);
+    println!("  {:<30} {}", "config_arm_boost".bold().green(), config_arm_boost);
+    println!("  {:<30} {}", "config_otg_mode".bold().green(), config_otg_mode);
+    println!("  {:<30} {}", "config_pcie".bold().green(), config_pcie);
+    println!("  {:<30} {}", "config_pcie_gen".bold().green(), config_pcie_gen);
+    println!("  {:<30} {}", "config_usb_power".bold().green(), config_usb_power);
+    println!("  {:<30} {}", "username".bold().green(), username);
+    println!("  {:<30} {}", "password".bold().green(), password);
+    println!("  {:<30} {}", "extra_packages".bold().green(), extra_packages);
+
+    let confirm = if params.get("--automate").map_or(false, |v| v == "y") {
+        "y".to_string()
+    } else {
+        let mut input = String::new();
+        println!("{}", format!("\nWARNING: This will destroy all data on the target drive.\nAre you sure you want to proceed? (y/N): ").bold().red());
+        std::io::stdin().read_line(&mut input).expect("Failed to read line");
+        input.trim().to_string()
+    };
+
+    if !matches!(confirm.as_str(), "y" | "Y" | "yes" | "Yes" | "YES") {
+        println!("Operation aborted.");
+        return;
+    }
 
     // Unmount any existing partitions on the target drive
     unmount::unmount_partitions_on_drive(&target_device);
@@ -164,5 +179,5 @@ pub fn run_installer(params: HashMap<String, String>) {
     // Chroot setup
     chroot_setup::chroot_setup(mount_dir, &hostname, &username, &password, &root_password_hash);
 
-    println!("Gentoo installation on Raspberry Pi 5 completed successfully.");
+    println!("{}", "Gentoo installation on Raspberry Pi 5 completed successfully.".bold().green());
 }

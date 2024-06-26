@@ -9,7 +9,7 @@ fn main() {
 
     if params.contains_key("--help") {
         utils::display_help::display_help();
-        return;
+        std::process::exit(0);
     }
 
     utils::run_installer::run_installer(params);

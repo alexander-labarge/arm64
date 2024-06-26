@@ -11,6 +11,7 @@ pub fn parse_arguments() -> HashMap<String, String> {
     while let Some(arg) = iter.next() {
         if arg == "--help" || arg == "-h" {
             display_help();
+            std::process::exit(0); // Exit the program after displaying help
         }
         if let Some(value) = iter.next() {
             params_map.insert(arg.clone(), value.clone());
