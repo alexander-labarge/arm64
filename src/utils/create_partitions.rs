@@ -1,6 +1,5 @@
-use std::process::{Command, exit};
+use std::process::Command;
 use std::io::Write;
-
 pub fn create_partitions(target_drive: &str, boot_size: &str, swap_size: &str) {
     println!("Creating partitions on {}", target_drive);
 
