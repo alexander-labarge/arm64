@@ -41,7 +41,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     let config_usb_power = params.get("--config_usb_power").unwrap_or(&"usb_max_current_enable=1".to_string()).to_string();
     let username = params.get("--username").unwrap_or(&"skywalker".to_string()).to_string();
     let password = params.get("--password").unwrap_or(&"skywalker".to_string()).to_string();
-    let extra_packages = params.get("--extra_packages").unwrap_or(&"".to_string()).to_string();
+    let extra_packages = params.get("--extra_packages").unwrap_or(&"dev-vcs/git app-editors/vim".to_string()).to_string();
     let timezone_choice = params.get("--timezone").unwrap_or(&"America/New_York".to_string()).to_string();
 
     // Determine partition suffix
