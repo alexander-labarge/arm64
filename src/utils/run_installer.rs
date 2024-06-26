@@ -15,9 +15,12 @@ use crate::utils::{
     setup_symlinks,
     create_fstab,
     chroot_setup::chroot_setup, // function only available in this module
+    display_help::print_logo, // make sure print_logo is imported
 };
 
 pub fn run_installer(params: HashMap<String, String>) {
+    print_logo(); // Print the logo at the beginning
+
     // Extracting parameters with default values
     let hostname = params.get("--hostname").unwrap_or(&"gentoo-pi5-router".to_string()).to_string();
     let target_device = params.get("--target_drive").unwrap_or(&"/dev/sda".to_string()).to_string();
@@ -112,7 +115,12 @@ pub fn run_installer(params: HashMap<String, String>) {
         "y".to_string()
     } else {
         let mut input = String::new();
-        println!("{}", format!("\nWARNING: This will destroy all data on the target drive.\nAre you sure you want to proceed? (y/N): ").bold().red());
+        println!("{}", format!("\n=====================================================").bold().bright_black()); 
+        println!("{}", format!("\nWARNING: This will destroy all data on the target drive.").bold().yellow());
+        println!("{}", format!("\nWARNING: Are you sure you want to proceed? (y/N): ").bold().red());
+        println!("{}", format!("\n=====================================================").bold().bright_black());        
+        // Add answer in front of user input
+        println!("{}", format!("Answer: ").bold().cyan());
         std::io::stdin().read_line(&mut input).expect("Failed to read line");
         input.trim().to_string()
     };

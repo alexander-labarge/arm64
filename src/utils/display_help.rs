@@ -1,6 +1,6 @@
 use colored::*;
 
-pub fn display_help() {
+pub fn print_logo() {
     let ascii_art = r#"
     =================================================================================================
     _______   __          _______          ______                        __                         
@@ -19,7 +19,11 @@ pub fn display_help() {
     let title = "Raspberry Pi 5: Gentoo Installer";
 
     println!("{}", ascii_art.bold().bright_white());
-    println!("{}", title.bold().green());
+    println!("{}", title.bold().yellow().underline());
+}
+
+pub fn display_help() {
+    print_logo();
     println!();
     println!("{}", "Usage: sudo ./pi_installer [OPTIONS]".bold().yellow());
     println!();
