@@ -25,6 +25,16 @@ CARGO_CONFIG=~/.cargo/config.toml
 echo "[target.aarch64-unknown-linux-gnu]" >> $CARGO_CONFIG
 echo 'linker = "aarch64-linux-gnu-gcc"' >> $CARGO_CONFIG
 
+# Function to tally lines of code for Rust files
+function tally_lines_of_code() {
+    local total_lines=$(find . -name "*.rs" -print0 | xargs -0 wc -l | tail -n 1 | awk '{print $1}')
+    echo "Total lines of Rust code: $total_lines"
+}
+
+# Tally lines of code before building
+echo "Tallying lines of code before building..."
+tally_lines_of_code
+
 # Building the project using Cargo for the release profile and target architecture
 echo "Building the project for amd64..."
 cargo build --release
@@ -35,6 +45,10 @@ cargo build --release --target=aarch64-unknown-linux-gnu
 # Moving the compiled binaries to the current directory with appropriate names
 mv target/release/pi_installer pi_installer_amd64
 mv target/aarch64-unknown-linux-gnu/release/pi_installer pi_installer_arm64
+
+# Tally lines of code after building
+echo "Tallying lines of code after building..."
+tally_lines_of_code
 
 # Copy the binary to the remote system
 REMOTE_USER="skywalker"
