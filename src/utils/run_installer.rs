@@ -17,6 +17,7 @@ use crate::utils::{
     create_fstab,
     chroot_setup::chroot_setup,
     display_help::print_logo,
+    mount_partitions::mount_partitions,
 };
 
 fn confirm_proceed(target_device: &str) -> Result<bool, String> {
@@ -169,6 +170,9 @@ pub fn run_installer(params: HashMap<String, String>) {
 
     // Format partitions
     format_partitions::format_partitions(&target_device);
+
+    // Mount partitions
+    mount_partitions(mount_dir, &target_device);
 
     // Install Gentoo base system
     install_gentoo::install_gentoo(&stage3_url, mount_dir, &target_device);

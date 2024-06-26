@@ -1,5 +1,6 @@
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::io::Write;
+
 pub fn create_partitions(target_drive: &str, boot_size: &str, swap_size: &str) {
     println!("Creating partitions on {}", target_drive);
 
@@ -8,16 +9,9 @@ pub fn create_partitions(target_drive: &str, boot_size: &str, swap_size: &str) {
         boot_size, swap_size
     );
 
-    let output = Command::new("fdisk")
-        .arg(target_drive)
-        .arg("-c")
-        .arg("-w")
-        .output()
-        .expect("Failed to execute fdisk");
-
     let mut child = Command::new("fdisk")
         .arg(target_drive)
-        .stdin(std::process::Stdio::piped())
+        .stdin(Stdio::piped())
         .spawn()
         .expect("Failed to execute fdisk");
 

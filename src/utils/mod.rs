@@ -15,3 +15,4 @@ pub mod run_installer;
 pub mod setup_boot_config;
 pub mod setup_symlinks;
 pub mod unmount;
+pub mod mount_partitions;
