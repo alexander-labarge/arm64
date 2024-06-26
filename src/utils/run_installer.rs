@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, process::Command};
+use std::io::{self, Write};
 use colored::*;
 
 use crate::utils::{
@@ -17,6 +18,37 @@ use crate::utils::{
     chroot_setup::chroot_setup,
     display_help::print_logo,
 };
+
+
+fn confirm_proceed(target_device: &str) -> bool {
+    let mut input = String::new();
+    
+    println!("{}", "\n=====================================================".bold().bright_black());
+    println!("{}", format!("\nWARNING: This will destroy all data on the target drive: {}.", target_device).bold().yellow());
+
+    // Execute lsblk command and display with color enhancement
+    let output = Command::new("lsblk")
+        .arg(target_device)
+        .output()
+        .expect("Failed to execute lsblk command");
+
+    let output_str = String::from_utf8_lossy(&output.stdout).to_string();
+    for line in output_str.lines() {
+        if line.contains("NAME") || line.contains("SIZE") || line.contains("TYPE") {
+            println!("{}", line.bold().blue());
+        } else {
+            println!("{}", line.dimmed());
+        }
+    }
+
+    println!("{}", "\nAre you sure you want to proceed? (y/N): ".bold().red());
+    // Add answer in front of user input
+    print!("{}", "Answer: ".bold().cyan());
+    io::stdout().flush().expect("Failed to flush stdout");
+    io::stdin().read_line(&mut input).expect("Failed to read line");
+    
+    matches!(input.trim().to_lowercase().as_str(), "y" | "yes")
+}
 
 pub fn run_installer(params: HashMap<String, String>) {
     print_logo(); // Print the logo at the beginning
@@ -111,21 +143,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     println!("  {:<30} {}", "extra_packages".bold().green(), extra_packages);
     println!("  {:<30} {}", "timezone".bold().green(), timezone_choice);
 
-    let confirm = if params.get("--automate").map_or(false, |v| v == "y") {
-        "y".to_string()
-    } else {
-        let mut input = String::new();
-        println!("{}", format!("\n=====================================================").bold().bright_black()); 
-        println!("{}", format!("\nWARNING: This will destroy all data on the target drive.").bold().yellow());
-        println!("{}", format!("\nWARNING: Are you sure you want to proceed? (y/N): ").bold().red());
-        println!("{}", format!("\n=====================================================").bold().bright_black());        
-        // Add answer in front of user input
-        println!("{}", format!("Answer: ").bold().cyan());
-        std::io::stdin().read_line(&mut input).expect("Failed to read line");
-        input.trim().to_string()
-    };
-
-    if !matches!(confirm.as_str(), "y" | "Y" | "yes" | "Yes" | "YES") {
+    if !confirm_proceed(&target_device) {
         println!("Operation aborted.");
         return;
     }
