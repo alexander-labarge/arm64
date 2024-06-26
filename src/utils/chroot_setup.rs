@@ -14,7 +14,6 @@ pub fn chroot_setup(
     let proc_path = format!("{}/proc", mount_dir);
     let sys_path = format!("{}/sys", mount_dir);
     let dev_path = format!("{}/dev", mount_dir);
-    let boot_path = format!("{}/boot", mount_dir);
 
     // Copy resolv.conf
     Command::new("cp")
@@ -60,20 +59,6 @@ pub fn chroot_setup(
         .arg(&dev_path)
         .output()
         .expect("Failed to make /dev rslave");
-
-    // Mount /boot
-    Command::new("mount")
-        .arg("--rbind")
-        .arg("/boot")
-        .arg(&boot_path)
-        .output()
-        .expect("Failed to mount /boot");
-
-    Command::new("mount")
-        .arg("--make-rslave")
-        .arg(&boot_path)
-        .output()
-        .expect("Failed to make /boot rslave");
 
     // Load profile
     let load_profile = "source /etc/profile;";

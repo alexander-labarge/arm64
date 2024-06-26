@@ -19,8 +19,7 @@ use crate::utils::{
     display_help::print_logo,
 };
 
-
-fn confirm_proceed(target_device: &str) -> bool {
+fn confirm_proceed(target_device: &str) -> Result<bool, String> {
     let mut input = String::new();
     
     println!("{}", "\n=====================================================".bold().bright_black());
@@ -30,7 +29,11 @@ fn confirm_proceed(target_device: &str) -> bool {
     let output = Command::new("lsblk")
         .arg(target_device)
         .output()
-        .expect("Failed to execute lsblk command");
+        .map_err(|_| format!("Failed to execute lsblk command for device: {}", target_device))?;
+
+    if output.stdout.is_empty() {
+        return Err(format!("Target device {} not found. Please check the device path and try again.", target_device));
+    }
 
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();
     for line in output_str.lines() {
@@ -47,7 +50,7 @@ fn confirm_proceed(target_device: &str) -> bool {
     io::stdout().flush().expect("Failed to flush stdout");
     io::stdin().read_line(&mut input).expect("Failed to read line");
     
-    matches!(input.trim().to_lowercase().as_str(), "y" | "yes")
+    Ok(matches!(input.trim().to_lowercase().as_str(), "y" | "yes"))
 }
 
 pub fn run_installer(params: HashMap<String, String>) {
@@ -143,9 +146,16 @@ pub fn run_installer(params: HashMap<String, String>) {
     println!("  {:<30} {}", "extra_packages".bold().green(), extra_packages);
     println!("  {:<30} {}", "timezone".bold().green(), timezone_choice);
 
-    if !confirm_proceed(&target_device) {
-        println!("Operation aborted.");
-        return;
+    match confirm_proceed(&target_device) {
+        Ok(true) => {}
+        Ok(false) => {
+            println!("Operation aborted.");
+            return;
+        }
+        Err(e) => {
+            eprintln!("{}", e.bold().red());
+            return;
+        }
     }
 
     // Unmount any existing partitions on the target drive

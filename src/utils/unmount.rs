@@ -1,20 +1,22 @@
 use std::process::Command;
 
 pub fn unmount_partitions_on_drive(drive: &str) {
+    let drive_name = drive.trim_start_matches("/dev/"); // Remove /dev/ to match lsblk output
+
     let partprobe_output = Command::new("partprobe")
         .arg(drive)
         .output()
         .expect("Failed to execute partprobe");
 
     if !partprobe_output.status.success() {
-        eprintln!("Failed to execute partprobe on the drive.");
+        eprintln!("Failed to execute partprobe on the drive: {}", drive);
         return;
     }
 
     let partitions_output = Command::new("lsblk")
         .arg("-ln")
         .arg("-o")
-        .arg("NAME,MOUNTPOINT")
+        .arg("NAME,MOUNTPOINT,PKNAME")
         .output()
         .expect("Failed to execute lsblk");
 
@@ -22,7 +24,8 @@ pub fn unmount_partitions_on_drive(drive: &str) {
 
     for line in partitions_str.lines() {
         let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.len() == 2 && parts[1].starts_with('/') {
+        // Ensure the partition belongs to the target drive and has a mount point
+        if parts.len() == 3 && parts[2] == drive_name && parts[1].starts_with('/') {
             let partition = parts[1];
 
             let umount_output = Command::new("umount")

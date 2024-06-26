@@ -8,13 +8,44 @@ cd "$SCRIPT_DIR"
 git config --global user.name "Alexander La Barge"
 git config --global user.email "alex@labarge.dev"
 
-# Building the project using Cargo for the release profile
-echo "Building the project..."
+# Install the aarch64-unknown-linux-gnu toolchain and add target
+rustup target add aarch64-unknown-linux-gnu
+
+# Install the AArch64 cross-compiler (Debian/Ubuntu)
+sudo apt-get install gcc-aarch64-linux-gnu -y
+
+# Remove existing configuration files to avoid conflicts
+rm -f ~/.cargo/config ~/.cargo/config.toml
+
+# Set up the linker for cross-compilation in Cargo config.toml
+mkdir -p ~/.cargo
+CARGO_CONFIG=~/.cargo/config.toml
+
+# Add the target configuration
+echo "[target.aarch64-unknown-linux-gnu]" >> $CARGO_CONFIG
+echo 'linker = "aarch64-linux-gnu-gcc"' >> $CARGO_CONFIG
+
+# Building the project using Cargo for the release profile and target architecture
+echo "Building the project for amd64..."
 cargo build --release
 
-# Moving the compiled binary to the current directory
-mv target/release/pi_installer .
+echo "Building the project for arm64..."
+cargo build --release --target=aarch64-unknown-linux-gnu
 
-# Running the pi_installer with sudo and --help
-echo "Testing the help function..."
-sudo ./pi_installer --help
+# Moving the compiled binaries to the current directory with appropriate names
+mv target/release/pi_installer pi_installer_amd64
+mv target/aarch64-unknown-linux-gnu/release/pi_installer pi_installer_arm64
+
+# Testing the pi_installer with sudo and --help for the detected architecture
+ARCH=$(uname -m)
+
+if [ "$ARCH" = "x86_64" ]; then
+    echo "Testing the help function for amd64..."
+    sudo ./pi_installer_amd64 --help
+elif [ "$ARCH" = "aarch64" ]; then
+    echo "Testing the help function for arm64..."
+    sudo ./pi_installer_arm64 --help
+else
+    echo "Unsupported architecture: $ARCH"
+    exit 1
+fi
