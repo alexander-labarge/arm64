@@ -14,7 +14,7 @@ use crate::utils::{
     copy_firmware,
     setup_symlinks,
     create_fstab,
-    chroot_setup,
+    chroot_setup::chroot_setup, // function only available in this module
 };
 
 pub fn run_installer(params: HashMap<String, String>) {
@@ -42,6 +42,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     let username = params.get("--username").unwrap_or(&"skywalker".to_string()).to_string();
     let password = params.get("--password").unwrap_or(&"skywalker".to_string()).to_string();
     let extra_packages = params.get("--extra_packages").unwrap_or(&"".to_string()).to_string();
+    let timezone_choice = params.get("--timezone").unwrap_or(&"America/New_York".to_string()).to_string();
 
     // Determine partition suffix
     let partition_suffix = if target_device.contains("nvme") || target_device.contains("mmcblk") {
@@ -105,6 +106,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     println!("  {:<30} {}", "username".bold().green(), username);
     println!("  {:<30} {}", "password".bold().green(), password);
     println!("  {:<30} {}", "extra_packages".bold().green(), extra_packages);
+    println!("  {:<30} {}", "timezone".bold().green(), timezone_choice);
 
     let confirm = if params.get("--automate").map_or(false, |v| v == "y") {
         "y".to_string()
@@ -177,7 +179,14 @@ pub fn run_installer(params: HashMap<String, String>) {
     create_fstab::create_fstab(mount_dir, &uuid_root, &uuid_boot, &uuid_swap);
 
     // Chroot setup
-    chroot_setup::chroot_setup(mount_dir, &hostname, &username, &password, &root_password_hash);
+    chroot_setup(
+        &mount_dir,
+        &hostname,
+        &username,
+        &password,
+        &root_password_hash,
+        &timezone_choice,
+    );
 
     println!("{}", "Gentoo installation on Raspberry Pi 5 completed successfully.".bold().green());
 }

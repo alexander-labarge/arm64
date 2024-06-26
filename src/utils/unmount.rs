@@ -22,7 +22,7 @@ pub fn unmount_partitions_on_drive(drive: &str) {
 
     for line in partitions_str.lines() {
         let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.len() == 2 && parts[0].starts_with(drive) {
+        if parts.len() == 2 && parts[1].starts_with('/') {
             let partition = parts[1];
 
             let umount_output = Command::new("umount")
