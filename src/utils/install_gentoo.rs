@@ -10,7 +10,21 @@ pub fn install_gentoo(stage3_url: &str, mount_dir: &str, target_drive: &str) {
     };
 
     let root_partition = format!("{}{}3", target_drive, partition_suffix);
+    let boot_partition = format!("{}{}1", target_drive, partition_suffix);
 
+    // Create the mount directory if it doesn't exist
+    let mkdir_output = Command::new("mkdir")
+        .arg("-p")
+        .arg(mount_dir)
+        .output()
+        .expect("Failed to create mount directory");
+
+    if !mkdir_output.status.success() {
+        eprintln!("Failed to create mount directory: {}", String::from_utf8_lossy(&mkdir_output.stderr));
+        exit(1);
+    }
+
+    // Mount the root partition
     let mount_output = Command::new("mount")
         .arg(&root_partition)
         .arg(mount_dir)
@@ -22,6 +36,7 @@ pub fn install_gentoo(stage3_url: &str, mount_dir: &str, target_drive: &str) {
         exit(1);
     }
 
+    // Download the Stage3 tarball
     let wget_output = Command::new("wget")
         .arg(stage3_url)
         .arg("-O")
@@ -37,6 +52,7 @@ pub fn install_gentoo(stage3_url: &str, mount_dir: &str, target_drive: &str) {
         exit(1);
     }
 
+    // Extract the Stage3 tarball
     let tar_output = Command::new("tar")
         .arg("xpf")
         .arg("stage3.tar.xz")
@@ -52,4 +68,31 @@ pub fn install_gentoo(stage3_url: &str, mount_dir: &str, target_drive: &str) {
         eprintln!("Failed to extract stage3 tarball: {}", String::from_utf8_lossy(&tar_output.stderr));
         exit(1);
     }
+
+    // Create the /boot directory within the mount directory
+    let boot_dir_path = format!("{}/boot", mount_dir);
+    let mkdir_boot_output = Command::new("mkdir")
+        .arg("-p")
+        .arg(&boot_dir_path)
+        .output()
+        .expect("Failed to create /boot directory");
+
+    if !mkdir_boot_output.status.success() {
+        eprintln!("Failed to create /boot directory: {}", String::from_utf8_lossy(&mkdir_boot_output.stderr));
+        exit(1);
+    }
+
+    // Mount the boot partition
+    let mount_boot_output = Command::new("mount")
+        .arg(&boot_partition)
+        .arg(&boot_dir_path)
+        .output()
+        .expect("Failed to execute mount");
+
+    if !mount_boot_output.status.success() {
+        eprintln!("Failed to mount boot partition: {}", String::from_utf8_lossy(&mount_boot_output.stderr));
+        exit(1);
+    }
+
+    println!("Gentoo base system installed successfully.");
 }
