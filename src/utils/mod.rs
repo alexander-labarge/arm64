@@ -1,0 +1,16 @@
+pub mod arguments;
+pub mod check_root;
+pub mod display_help;
+pub mod unmount;
+pub mod install_tools;
+pub mod create_partitions;
+pub mod format_partitions;
+pub mod install_gentoo;
+pub mod install_portage_snapshot;
+pub mod install_kernel_firmware;
+pub mod setup_boot_config;
+pub mod copy_firmware;
+pub mod setup_symlinks;
+pub mod create_fstab;
+pub mod chroot_setup;
+pub mod get_uuid;
