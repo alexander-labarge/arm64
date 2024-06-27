@@ -36,63 +36,109 @@ pub fn chroot_setup(
     }
 
     // Update environment
-    let profile_command = "source /etc/profile;";
+    let profile_command = "source /etc/profile";
     if !execute_chroot_command(mount_dir, profile_command) {
         return Err("Failed to load profile.".to_string());
     }
 
     // Set timezone
-    let timezone_command = format!("ln -sf /usr/share/zoneinfo/{} /etc/localtime;", timezone_choice);
+    let timezone_command = format!("ln -sf /usr/share/zoneinfo/{} /etc/localtime", timezone_choice);
     if !execute_chroot_command(mount_dir, &timezone_command) {
         return Err("Failed to set timezone.".to_string());
     }
 
     // Enable locales
-    let locales_command = "sed -i '/en_US.UTF-8 UTF-8/s/^#//g' /etc/locale.gen; locale-gen;";
+    let locales_command = "sed -i '/en_US.UTF-8 UTF-8/s/^#//g' /etc/locale.gen && locale-gen";
     if !execute_chroot_command(mount_dir, locales_command) {
         return Err("Failed to enable locales.".to_string());
     }
 
+    // Eselect locale
+    let eselect_locale_command = "eselect locale set en_US.utf8 && env-update && source /etc/profile";
+    if !execute_chroot_command(mount_dir, eselect_locale_command) {
+        return Err("Failed to set locale.".to_string());
+    }
+
     // Eselect news
-    let news_command = "eselect news read;";
+    let news_command = "eselect news read";
     if !execute_chroot_command(mount_dir, news_command) {
         return Err("Failed to read eselect news.".to_string());
     }
 
     // Set hostname
-    let hostname_command = format!("echo \"{}\" > /etc/hostname;", hostname);
+    let hostname_command = format!("echo \"{}\" > /etc/hostname", hostname);
     if !execute_chroot_command(mount_dir, &hostname_command) {
         return Err("Failed to set hostname.".to_string());
     }
 
     // Create user
-    let user_command = format!("useradd -m -G users,wheel -s /bin/bash {};", username);
+    let user_command = format!("useradd -m -G users,wheel -s /bin/bash {}", username);
     if !execute_chroot_command(mount_dir, &user_command) {
         return Err("Failed to create user.".to_string());
     }
 
     // Set user password
-    let password_command = format!("echo -e \"{}\\n{}\" | passwd {};", password, password, username);
+    let password_command = format!("echo -e \"{}\\n{}\" | passwd {}", password, password, username);
     if !execute_chroot_command(mount_dir, &password_command) {
         return Err("Failed to set user password.".to_string());
     }
 
     // Configure sudoers
-    let sudoers_command = format!("echo \"{} ALL=(ALL) NOPASSWD: ALL\" >> /etc/sudoers;", username);
+    let sudoers_command = format!("echo \"{} ALL=(ALL) NOPASSWD: ALL\" >> /etc/sudoers", username);
     if !execute_chroot_command(mount_dir, &sudoers_command) {
         return Err("Failed to configure sudoers.".to_string());
     }
 
     // Backup shadow file
-    let shadow_backup_command = "cp /etc/shadow /etc/shadow.backup;";
+    let shadow_backup_command = "cp /etc/shadow /etc/shadow.backup";
     if !execute_chroot_command(mount_dir, shadow_backup_command) {
         return Err("Failed to backup shadow file.".to_string());
     }
 
     // Set root password
-    let root_password_command = format!("sed -i \"s|^root:[^:]*:|root:{}:|g\" /etc/shadow;", root_password_hash);
+    let root_password_command = format!("sed -i \"s|^root:[^:]*:|root:{}:|g\" /etc/shadow", root_password_hash);
     if !execute_chroot_command(mount_dir, &root_password_command) {
         return Err("Failed to set root password.".to_string());
+    }
+
+    // Configure make.conf
+    let make_conf_command = r#"
+        cat <<EOF > /etc/portage/make.conf
+COMMON_FLAGS="-mcpu=cortex-a76+crc+crypto -mtune=cortex-a76 -O2 -pipe"
+CFLAGS="${COMMON_FLAGS}"
+CXXFLAGS="${COMMON_FLAGS}"
+FCFLAGS="${COMMON_FLAGS}"
+FFLAGS="${COMMON_FLAGS}"
+CHOST="aarch64-unknown-linux-gnu"
+LC_MESSAGES=C.utf8
+ACCEPT_LICENSE="*"
+MAKEOPTS="-j5"
+EOF
+    "#;
+    if !execute_chroot_command(mount_dir, make_conf_command) {
+        return Err("Failed to configure make.conf.".to_string());
+    }
+
+    // Update the system
+    let update_system_command = "emerge --sync && emerge -uDN @world";
+    if !execute_chroot_command(mount_dir, update_system_command) {
+        return Err("Failed to update the system.".to_string());
+    }
+
+    // Install cpuid2cpuflags
+    if !execute_chroot_command(mount_dir, "emerge cpuid2cpuflags") {
+        return Err("Failed to install cpuid2cpuflags.".to_string());
+    }
+
+    // Configure package.use and package.accept_keywords
+    let configure_package_use_command = r#"
+        echo "*/* $(cpuid2cpuflags)" > /etc/portage/package.use/00cpu-flags
+        mkdir -p /etc/portage/package.use/custom
+        echo ">=net-wireless/wpa_supplicant-2.10-r3 dbus" > /etc/portage/package.use/networkmanager
+        echo "=sys-block/io-scheduler-udev-rules-2 ~arm64" > /etc/portage/package.accept_keywords/io-scheduler
+    "#;
+    if !execute_chroot_command(mount_dir, configure_package_use_command) {
+        return Err("Failed to configure package.use and package.accept_keywords.".to_string());
     }
 
     // Packages to install
@@ -101,7 +147,7 @@ pub fn chroot_setup(
         "net-misc/openssh",
         "net-misc/chrony",
         "app-admin/sudo",
-        "wget",
+        "net-misc/wget",
         "dev-vcs/git",
         "sys-apps/parted",
         "net-misc/curl",
@@ -118,16 +164,19 @@ pub fn chroot_setup(
         }
     }
 
-    // Enable NetworkManager
-    let enable_networkmanager_command = "rc-update add NetworkManager default && rc-service NetworkManager start";
-    if !execute_chroot_command(mount_dir, enable_networkmanager_command) {
-        return Err("Failed to enable and start NetworkManager.".to_string());
-    }
+    // Enable and start services using OpenRC
+    let services = [
+        ("NetworkManager", "networkmanager"),
+        ("sshd", "sshd"),
+        ("chronyd", "chrony"),
+        ("dhcpcd", "dhcpcd")
+    ];
 
-    // Enable sshd
-    let enable_sshd_command = "rc-update add sshd default && rc-service sshd start";
-    if !execute_chroot_command(mount_dir, enable_sshd_command) {
-        return Err("Failed to enable and start sshd.".to_string());
+    for (service, description) in &services {
+        let enable_service_command = format!("rc-update add {} default && rc-service {} start", service, service);
+        if !execute_chroot_command(mount_dir, &enable_service_command) {
+            return Err(format!("Failed to enable and start {}.", description));
+        }
     }
 
     // Disable SSH root login
@@ -142,10 +191,12 @@ pub fn chroot_setup(
         return Err("Failed to generate SSH host keys.".to_string());
     }
 
-    // Enable chrony
-    let enable_chrony_command = "rc-update add chronyd default && rc-service chronyd start";
-    if !execute_chroot_command(mount_dir, enable_chrony_command) {
-        return Err("Failed to enable and start chrony.".to_string());
+    // Comment out the specified line in /etc/inittab
+    let update_inittab_command = r#"
+        sed -i 's|^f0:12345:respawn:/sbin/agetty 9600 ttyAMA0 vt100|#f0:12345:respawn:/sbin/agetty 9600 ttyAMA0 vt100|' /etc/inittab
+    "#;
+    if !execute_chroot_command(mount_dir, update_inittab_command) {
+        return Err("Failed to update /etc/inittab.".to_string());
     }
 
     Ok(String::new())
