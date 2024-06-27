@@ -1,5 +1,5 @@
 use std::process::Command;
-use crate::utils::ssh_setup::add_ssh_key;
+// use crate::utils::ssh_setup::add_ssh_key;
 
 pub fn chroot_setup(
     mount_dir: &str,
@@ -8,7 +8,7 @@ pub fn chroot_setup(
     password: &str,
     root_password_hash: &str,
     timezone_choice: &str,
-    ssh_key: Option<&str>,
+    // ssh_key: Option<&str>,
 ) -> Result<String, String> {
     println!("Setting up chroot environment...");
 
@@ -68,11 +68,11 @@ pub fn chroot_setup(
         }
     }
 
-    // Add provided SSH key if any
-    if let Some(key) = ssh_key {
-        add_ssh_key(mount_dir, username, key)?;
-        println!("Provided SSH key added to authorized_keys.");
-    }
+    // // Add provided SSH key if any
+    // if let Some(key) = ssh_key {
+    //     add_ssh_key(mount_dir, username, key)?;
+    //     println!("Provided SSH key added to authorized_keys.");
+    // }
 
     Ok(String::new())
 }

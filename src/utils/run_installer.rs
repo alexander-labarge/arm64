@@ -65,7 +65,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     let portage_snapshot_url: String = params.get("--portage_snapshot_url").unwrap_or(&"https://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2".to_string()).to_string();
     let root_password_hash: String = params.get("--root_password_hash").unwrap_or(&"$6$.KYgMi02hVG4MNRk$1y6XS8QuIWEsqZNj6VFL9q9vMbItPkzPRi.Uh4/iiPIihsrx7ky23Rrwt.44IrkA76cx2HOrxrrMOOvz6TK6A/".to_string()).to_string(); // pw == skywalker
     let cmdline_console: String = params.get("--cmdline_console").unwrap_or(&"console=serial0,115200 console=tty1".to_string()).to_string();
-    let cmdline_extra: String = params.get("--cmdline_extra").unwrap_or(&"rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles".to_string()).to_string();
+    let cmdline_extra: String = params.get("--cmdline_extra").unwrap_or(&"rootfstype=ext4 fsck.repair=yes rootwait splash plymouth.ignore-serial-consoles".to_string()).to_string();
     let config_audio: String = params.get("--config_audio").unwrap_or(&"dtparam=audio=on".to_string()).to_string();
     let config_overlay: String = params.get("--config_overlay").unwrap_or(&"dtoverlay=vc4-kms-v3d".to_string()).to_string();
     let config_max_framebuffers: String = params.get("--config_max_framebuffers").unwrap_or(&"max_framebuffers=2".to_string()).to_string();
@@ -227,7 +227,7 @@ pub fn run_installer(params: HashMap<String, String>) {
         &password,
         &root_password_hash,
         &timezone_choice,
-        Some(&ssh_key),
+        // Some(&ssh_key),
     ).expect("Failed to setup chroot environment");
 
     println!("{}", "Gentoo installation on Raspberry Pi 5 completed successfully.".bold().green());
