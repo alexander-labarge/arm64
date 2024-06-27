@@ -17,7 +17,6 @@ use crate::utils::{
     chroot_setup::chroot_setup,
     display_help::print_logo,
     mount_partitions::mount_partitions,
-    ssh_setup::generate_ssh_key_pair,
 };
 
 fn confirm_proceed(target_device: &str) -> Result<bool, String> {
@@ -58,37 +57,31 @@ pub fn run_installer(params: HashMap<String, String>) {
     print_logo(); // Print the logo at the beginning
 
     // Extracting parameters with default values
-    let hostname = params.get("--hostname").unwrap_or(&"gentoo-pi5-router".to_string()).to_string();
-    let target_device = params.get("--target_drive").unwrap_or(&"/dev/sda".to_string()).to_string();
-    let boot_size = params.get("--boot_size").unwrap_or(&"1G".to_string()).to_string();
-    let swap_size = params.get("--swap_size").unwrap_or(&"8G".to_string()).to_string();
-    let stage3_url = params.get("--stage3_url").unwrap_or(&"https://distfiles.gentoo.org/releases/arm64/autobuilds/20240623T231913Z/stage3-arm64-desktop-openrc-20240623T231913Z.tar.xz".to_string()).to_string();
-    let portage_snapshot_url = params.get("--portage_snapshot_url").unwrap_or(&"https://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2".to_string()).to_string();
-    let root_password_hash = params.get("--root_password_hash").unwrap_or(&"$6$.KYgMi02hVG4MNRk$1y6XS8QuIWEsqZNj6VFL9q9vMbItPkzPRi.Uh4/iiPIihsrx7ky23Rrwt.44IrkA76cx2HOrxrrMOOvz6TK6A/".to_string()).to_string(); // pw == skywalker
-    let cmdline_console = params.get("--cmdline_console").unwrap_or(&"console=serial0,115200 console=tty1".to_string()).to_string();
-    let cmdline_extra = params.get("--cmdline_extra").unwrap_or(&"rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles".to_string()).to_string();
-    let config_audio = params.get("--config_audio").unwrap_or(&"dtparam=audio=on".to_string()).to_string();
-    let config_overlay = params.get("--config_overlay").unwrap_or(&"dtoverlay=vc4-kms-v3d".to_string()).to_string();
-    let config_max_framebuffers = params.get("--config_max_framebuffers").unwrap_or(&"max_framebuffers=2".to_string()).to_string();
-    let config_fw_kms_setup = params.get("--config_fw_kms_setup").unwrap_or(&"disable_fw_kms_setup=1".to_string()).to_string();
-    let config_64bit = params.get("--config_64bit").unwrap_or(&"arm_64bit=1".to_string()).to_string();
-    let config_overscan = params.get("--config_overscan").unwrap_or(&"disable_overscan=1".to_string()).to_string();
-    let config_arm_boost = params.get("--config_arm_boost").unwrap_or(&"arm_boost=1".to_string()).to_string();
-    let config_otg_mode = params.get("--config_otg_mode").unwrap_or(&"otg_mode=1".to_string()).to_string();
-    let config_pcie = params.get("--config_pcie").unwrap_or(&"dtparam=pciex1".to_string()).to_string();
-    let config_pcie_gen = params.get("--config_pcie_gen").unwrap_or(&"dtparam=pciex1_gen=3".to_string()).to_string();
-    let config_usb_power = params.get("--config_usb_power").unwrap_or(&"usb_max_current_enable=1".to_string()).to_string();
-    let username = params.get("--username").unwrap_or(&"skywalker".to_string()).to_string();
-    let password = params.get("--password").unwrap_or(&"skywalker".to_string()).to_string();
-    let extra_packages = params.get("--extra_packages").unwrap_or(&"dev-vcs/git app-editors/vim".to_string()).to_string();
-    let timezone_choice = params.get("--timezone").unwrap_or(&"America/New_York".to_string()).to_string();
-
-    // Generate SSH key pair
-    let ssh_key_pair = generate_ssh_key_pair().expect("Failed to generate SSH key pair");
-
-    // Add the generated SSH public key to the parameters
-    let mut params_with_ssh_key = params.clone();
-    params_with_ssh_key.insert("--ssh_key".to_string(), ssh_key_pair.public_key.clone());
+    let hostname: String = params.get("--hostname").unwrap_or(&"gentoo-pi5-router".to_string()).to_string();
+    let target_device: String = params.get("--target_drive").unwrap_or(&"/dev/sda".to_string()).to_string();
+    let boot_size: String = params.get("--boot_size").unwrap_or(&"1G".to_string()).to_string();
+    let swap_size: String = params.get("--swap_size").unwrap_or(&"8G".to_string()).to_string();
+    let stage3_url: String = params.get("--stage3_url").unwrap_or(&"https://distfiles.gentoo.org/releases/arm64/autobuilds/20240623T231913Z/stage3-arm64-desktop-openrc-20240623T231913Z.tar.xz".to_string()).to_string();
+    let portage_snapshot_url: String = params.get("--portage_snapshot_url").unwrap_or(&"https://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2".to_string()).to_string();
+    let root_password_hash: String = params.get("--root_password_hash").unwrap_or(&"$6$.KYgMi02hVG4MNRk$1y6XS8QuIWEsqZNj6VFL9q9vMbItPkzPRi.Uh4/iiPIihsrx7ky23Rrwt.44IrkA76cx2HOrxrrMOOvz6TK6A/".to_string()).to_string(); // pw == skywalker
+    let cmdline_console: String = params.get("--cmdline_console").unwrap_or(&"console=serial0,115200 console=tty1".to_string()).to_string();
+    let cmdline_extra: String = params.get("--cmdline_extra").unwrap_or(&"rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles".to_string()).to_string();
+    let config_audio: String = params.get("--config_audio").unwrap_or(&"dtparam=audio=on".to_string()).to_string();
+    let config_overlay: String = params.get("--config_overlay").unwrap_or(&"dtoverlay=vc4-kms-v3d".to_string()).to_string();
+    let config_max_framebuffers: String = params.get("--config_max_framebuffers").unwrap_or(&"max_framebuffers=2".to_string()).to_string();
+    let config_fw_kms_setup: String = params.get("--config_fw_kms_setup").unwrap_or(&"disable_fw_kms_setup=1".to_string()).to_string();
+    let config_64bit: String = params.get("--config_64bit").unwrap_or(&"arm_64bit=1".to_string()).to_string();
+    let config_overscan: String = params.get("--config_overscan").unwrap_or(&"disable_overscan=1".to_string()).to_string();
+    let config_arm_boost: String = params.get("--config_arm_boost").unwrap_or(&"arm_boost=1".to_string()).to_string();
+    let config_otg_mode: String = params.get("--config_otg_mode").unwrap_or(&"otg_mode=1".to_string()).to_string();
+    let config_pcie: String = params.get("--config_pcie").unwrap_or(&"dtparam=pciex1".to_string()).to_string();
+    let config_pcie_gen: String = params.get("--config_pcie_gen").unwrap_or(&"dtparam=pciex1_gen=3".to_string()).to_string();
+    let config_usb_power: String = params.get("--config_usb_power").unwrap_or(&"usb_max_current_enable=1".to_string()).to_string();
+    let username: String = params.get("--username").unwrap_or(&"skywalker".to_string()).to_string();
+    let password: String = params.get("--password").unwrap_or(&"skywalker".to_string()).to_string();
+    let extra_packages: String = params.get("--extra_packages").unwrap_or(&"dev-vcs/git app-editors/vim".to_string()).to_string();
+    let timezone_choice: String = params.get("--timezone").unwrap_or(&"America/New_York".to_string()).to_string();
+    let ssh_key: String = params.get("--ssh_key").unwrap_or(&"default-ssh-key".to_string()).to_string();
 
     // Determine partition suffix
     let partition_suffix = if target_device.contains("nvme") || target_device.contains("mmcblk") {
@@ -153,7 +146,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     println!("  {:<30} {}", "password".bold().green(), password);
     println!("  {:<30} {}", "extra_packages".bold().green(), extra_packages);
     println!("  {:<30} {}", "timezone".bold().green(), timezone_choice);
-    println!("  {:<30} {}", "ssh_key".bold().green(), ssh_key_pair.public_key);
+    println!("  {:<30} {}", "ssh_key".bold().green(), ssh_key);
 
     match confirm_proceed(&target_device) {
         Ok(true) => {}
@@ -234,17 +227,8 @@ pub fn run_installer(params: HashMap<String, String>) {
         &password,
         &root_password_hash,
         &timezone_choice,
-        Some(&ssh_key_pair.public_key),
+        Some(&ssh_key),
     ).expect("Failed to setup chroot environment");
 
     println!("{}", "Gentoo installation on Raspberry Pi 5 completed successfully.".bold().green());
-    println!("{}\n{}\n{}\n{}\n{}\n{}\n{}",
-        "===========================================================================".bold().green(),
-        "Installation Completed Successfully!".bold().green(),
-        "===========================================================================".bold().green(),
-        "You can use the following private SSH key to connect to your Raspberry Pi:".bold().yellow(),
-        ssh_key_pair.private_key.bold().yellow(),
-        "===========================================================================".bold().green(),
-        "Keep this key secure and do not share it with others.".bold().red()
-    );
 }

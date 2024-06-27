@@ -50,25 +50,59 @@ mv target/aarch64-unknown-linux-gnu/release/pi_installer pi_installer_arm64
 echo "Tallying lines of code after building..."
 tally_lines_of_code
 
-# Copy the binary to the remote system
-REMOTE_USER="skywalker"
-REMOTE_HOST="192.168.50.11"
-REMOTE_DIR="/home/skywalker/pi_installer"
-REMOTE_PASSWORD="skywalker"
+# Function to copy the binary to the remote system
+function copy_to_remote() {
+    local remote_user=$1
+    local remote_host=$2
+    local remote_password=$3
+    local binary_path=$4
 
-echo "Copying the binary to the remote system..."
-sshpass -p "$REMOTE_PASSWORD" scp ./pi_installer_arm64 $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR
+    echo "Copying the binary to the remote system..."
+    sshpass -p "$remote_password" scp "$binary_path" "$remote_user@$remote_host:/home/$remote_user/"
+}
 
-# Testing the pi_installer with sudo and --help for the detected architecture
-ARCH=$(uname -m)
+# Function to run the binary on the remote system
+function run_remote_installer() {
+    local remote_user=$1
+    local remote_host=$2
+    local remote_password=$3
+    local installer_binary=$4
+    local installer_params="${@:5}"
 
-if [ "$ARCH" = "x86_64" ]; then
-    echo "Testing the help function for amd64..."
-    sudo ./pi_installer_amd64 --help
-elif [ "$ARCH" = "aarch64" ]; then
-    echo "Testing the help function for arm64..."
-    sudo ./pi_installer_arm64 --help
+    echo "Executing the installer on the remote system..."
+    sshpass -p "$remote_password" ssh -o StrictHostKeyChecking=no "$remote_user@$remote_host" "cd /home/$remote_user && sudo ./$installer_binary $installer_params"
+}
+
+# Check for the --remote argument
+REMOTE=false
+if [[ " $@ " =~ " --remote " ]]; then
+    REMOTE=true
+    echo "Remote execution enabled."
+fi
+
+if $REMOTE; then
+    # Define remote connection parameters
+    REMOTE_USER="skywalker"
+    REMOTE_HOST="192.168.50.11"
+    REMOTE_PASSWORD="skywalker"
+
+    # Copy the binary to the remote system
+    copy_to_remote "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PASSWORD" "./pi_installer_arm64"
+
+    # Run the installer on the remote system
+    run_remote_installer "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PASSWORD" "pi_installer_arm64" "${@:1:$#-1}"
 else
-    echo "Unsupported architecture: $ARCH"
-    exit 1
+    # Testing the pi_installer with sudo and --help for the detected architecture
+    ARCH=$(uname -m)
+
+    if [ "$ARCH" = "x86_64" ]; then
+        echo "Testing the help function for amd64..."
+        sudo ./pi_installer_amd64 --help
+    elif [ "$ARCH" = "aarch64" ]; then
+        echo "Testing the help function for arm64..."
+        sudo ./pi_installer_arm64 --help
+    else
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+    fi
 fi
