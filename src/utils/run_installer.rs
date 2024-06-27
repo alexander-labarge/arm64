@@ -19,7 +19,12 @@ use crate::utils::{
     mount_partitions::mount_partitions,
 };
 
-fn confirm_proceed(target_device: &str) -> Result<bool, String> {
+fn confirm_proceed(target_device: &str, automate: bool) -> Result<bool, String> {
+    if automate {
+        println!("{}", "\nAutomated mode enabled. Proceeding without confirmation.".bold().green());
+        return Ok(true);
+    }
+
     let mut input = String::new();
     
     println!("{}", "\n=====================================================".bold().bright_black());
@@ -82,6 +87,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     let extra_packages: String = params.get("--extra_packages").unwrap_or(&"dev-vcs/git app-editors/vim".to_string()).to_string();
     let timezone_choice: String = params.get("--timezone").unwrap_or(&"America/New_York".to_string()).to_string();
     let ssh_key: String = params.get("--ssh_key").unwrap_or(&"default-ssh-key".to_string()).to_string();
+    let automate: bool = params.get("--automate").map_or(false, |val| val == "y");
 
     // Determine partition suffix
     let partition_suffix = if target_device.contains("nvme") || target_device.contains("mmcblk") {
@@ -148,7 +154,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     println!("  {:<30} {}", "timezone".bold().green(), timezone_choice);
     println!("  {:<30} {}", "ssh_key".bold().green(), ssh_key);
 
-    match confirm_proceed(&target_device) {
+    match confirm_proceed(&target_device, automate) {
         Ok(true) => {}
         Ok(false) => {
             println!("Operation aborted.");
