@@ -35,35 +35,100 @@ pub fn chroot_setup(
         return Err("Failed to mount /dev or make it rslave.".to_string());
     }
 
-    // Execute each command separately and report success or failure
+    // Update environment
     let profile_command = "source /etc/profile;";
+    if !execute_chroot_command(mount_dir, profile_command) {
+        return Err("Failed to load profile.".to_string());
+    }
+
+    // Set timezone
     let timezone_command = format!("ln -sf /usr/share/zoneinfo/{} /etc/localtime;", timezone_choice);
+    if !execute_chroot_command(mount_dir, &timezone_command) {
+        return Err("Failed to set timezone.".to_string());
+    }
+
+    // Enable locales
     let locales_command = "sed -i '/en_US.UTF-8 UTF-8/s/^#//g' /etc/locale.gen; locale-gen;";
+    if !execute_chroot_command(mount_dir, locales_command) {
+        return Err("Failed to enable locales.".to_string());
+    }
+
+    // Eselect news
     let news_command = "eselect news read;";
+    if !execute_chroot_command(mount_dir, news_command) {
+        return Err("Failed to read eselect news.".to_string());
+    }
+
+    // Set hostname
     let hostname_command = format!("echo \"{}\" > /etc/hostname;", hostname);
+    if !execute_chroot_command(mount_dir, &hostname_command) {
+        return Err("Failed to set hostname.".to_string());
+    }
+
+    // Create user
     let user_command = format!("useradd -m -G users,wheel -s /bin/bash {};", username);
+    if !execute_chroot_command(mount_dir, &user_command) {
+        return Err("Failed to create user.".to_string());
+    }
+
+    // Set user password
     let password_command = format!("echo -e \"{}\\n{}\" | passwd {};", password, password, username);
+    if !execute_chroot_command(mount_dir, &password_command) {
+        return Err("Failed to set user password.".to_string());
+    }
+
+    // Configure sudoers
     let sudoers_command = format!("echo \"{} ALL=(ALL) NOPASSWD: ALL\" >> /etc/sudoers;", username);
+    if !execute_chroot_command(mount_dir, &sudoers_command) {
+        return Err("Failed to configure sudoers.".to_string());
+    }
+
+    // Backup shadow file
     let shadow_backup_command = "cp /etc/shadow /etc/shadow.backup;";
+    if !execute_chroot_command(mount_dir, shadow_backup_command) {
+        return Err("Failed to backup shadow file.".to_string());
+    }
+
+    // Set root password
     let root_password_command = format!("sed -i \"s|^root:[^:]*:|root:{}:|g\" /etc/shadow;", root_password_hash);
+    if !execute_chroot_command(mount_dir, &root_password_command) {
+        return Err("Failed to set root password.".to_string());
+    }
 
-    let commands = vec![
-        (profile_command, "Loading profile"),
-        (&timezone_command, "Setting timezone"),
-        (locales_command, "Enabling locales"),
-        (news_command, "Eselect news"),
-        (&hostname_command, "Setting hostname"),
-        (&user_command, "Creating user"),
-        (&password_command, "Setting user password"),
-        (&sudoers_command, "Configuring sudoers"),
-        (shadow_backup_command, "Backing up shadow file"),
-        (&root_password_command, "Setting root password"),
-    ];
+    // Install NetworkManager and other essential packages
+    let install_packages_command = "USE=\"-modemmanager -ppp -gtk-doc -introspection -concheck\" emerge --verbose --autounmask-continue=y net-misc/networkmanager net-misc/openssh net-misc/chrony app-admin/sudo wget git parted curl tree vim neofetch";
+    if !execute_chroot_command(mount_dir, install_packages_command) {
+        return Err("Failed to install essential packages.".to_string());
+    }
 
-    for (command, description) in commands {
-        if !execute_chroot_command(mount_dir, command) {
-            return Err(format!("Failed to complete {}.", description));
-        }
+    // Enable NetworkManager
+    let enable_networkmanager_command = "systemctl enable NetworkManager";
+    if !execute_chroot_command(mount_dir, enable_networkmanager_command) {
+        return Err("Failed to enable and start NetworkManager.".to_string());
+    }
+
+    // Enable sshd
+    let enable_sshd_command = "systemctl enable sshd";
+    if !execute_chroot_command(mount_dir, enable_sshd_command) {
+        return Err("Failed to enable and start sshd.".to_string());
+    }
+
+    // Disable SSH root login
+    let disable_ssh_root_command = "sed -i 's/#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config";
+    if !execute_chroot_command(mount_dir, disable_ssh_root_command) {
+        return Err("Failed to disable SSH root login.".to_string());
+    }
+
+    // Generate SSH host keys
+    let generate_ssh_keys_command = "ssh-keygen -A";
+    if !execute_chroot_command(mount_dir, generate_ssh_keys_command) {
+        return Err("Failed to generate SSH host keys.".to_string());
+    }
+
+    // Enable chrony
+    let enable_chrony_command = "systemctl enable chronyd";
+    if !execute_chroot_command(mount_dir, enable_chrony_command) {
+        return Err("Failed to enable and start chrony.".to_string());
     }
 
     Ok(String::new())
