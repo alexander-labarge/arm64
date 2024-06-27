@@ -27,7 +27,7 @@ pub fn display_help() {
     println!();
     println!("{}", "Arguments:".bold().yellow());
     println!("  {:<30} {}", "--target_drive".bold().cyan(), "The target drive to install Gentoo (default: /dev/sda)".bold().white());
-    println!("  {:<30} {}", "--boot_size".bold().cyan(), "The size of the boot partition (default: 512M)".bold().white());
+    println!("  {:<30} {}", "--boot_size".bold().cyan(), "The size of the boot partition (default: 1G)".bold().white());
     println!("  {:<30} {}", "--swap_size".bold().cyan(), "The size of the swap partition (default: 8G)".bold().white());
     println!("  {:<30} {}", "--stage3_url".bold().cyan(), "The URL to download the stage3 tarball (default: URL)".bold().white());
     println!("  {:<30} {}", "--portage_snapshot_url".bold().cyan(), "The URL to download the portage snapshot (default: URL)".bold().white());
@@ -50,6 +50,7 @@ pub fn display_help() {
     println!("  {:<30} {}", "--password".bold().cyan(), "The password for the created user (default: skywalker)".bold().white());
     println!("  {:<30} {}", "--extra_packages".bold().cyan(), "Additional packages to install in the Gentoo system (default: dev-vcs/git app-editors/vim)".bold().white());
     println!("  {:<30} {}", "--timezone".bold().cyan(), "Timezone to set (default: America/New_York)".bold().white());
+    println!("  {:<30} {}", "--ssh_key".bold().cyan(), "Public SSH key to add to authorized_keys (optional)".bold().white());
     println!("  {:<30} {}", "--automate".bold().cyan(), "Automatically confirm all prompts (default: n)".bold().white());
     println!();
     println!("{}", "Example:".bold().yellow());
@@ -78,5 +79,6 @@ pub fn display_help() {
     println!("    {} {}", "--password".bold().cyan(), "mypassword \\".bold().green());
     println!("    {} {}", "--extra_packages".bold().cyan(), "'dev-vcs/git app-editors/vim' \\".bold().green());
     println!("    {} {}", "--timezone".bold().cyan(), "America/New_York \\".bold().green());
+    println!("    {} {}", "--ssh_key".bold().cyan(), "'your-ssh-public-key' \\".bold().green());
     println!("    {} {}", "--automate".bold().cyan(), "y".bold().green());
 }

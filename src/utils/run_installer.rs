@@ -1,7 +1,6 @@
 use std::{collections::HashMap, process::Command};
 use std::io::{self, Write};
 use colored::*;
-
 use crate::utils::{
     unmount,
     install_tools,
@@ -18,6 +17,7 @@ use crate::utils::{
     chroot_setup::chroot_setup,
     display_help::print_logo,
     mount_partitions::mount_partitions,
+    ssh_setup::generate_ssh_key_pair,
 };
 
 fn confirm_proceed(target_device: &str) -> Result<bool, String> {
@@ -83,6 +83,13 @@ pub fn run_installer(params: HashMap<String, String>) {
     let extra_packages = params.get("--extra_packages").unwrap_or(&"dev-vcs/git app-editors/vim".to_string()).to_string();
     let timezone_choice = params.get("--timezone").unwrap_or(&"America/New_York".to_string()).to_string();
 
+    // Generate SSH key pair
+    let ssh_key_pair = generate_ssh_key_pair().expect("Failed to generate SSH key pair");
+
+    // Add the generated SSH public key to the parameters
+    let mut params_with_ssh_key = params.clone();
+    params_with_ssh_key.insert("--ssh_key".to_string(), ssh_key_pair.public_key.clone());
+
     // Determine partition suffix
     let partition_suffix = if target_device.contains("nvme") || target_device.contains("mmcblk") {
         "p"
@@ -146,6 +153,7 @@ pub fn run_installer(params: HashMap<String, String>) {
     println!("  {:<30} {}", "password".bold().green(), password);
     println!("  {:<30} {}", "extra_packages".bold().green(), extra_packages);
     println!("  {:<30} {}", "timezone".bold().green(), timezone_choice);
+    println!("  {:<30} {}", "ssh_key".bold().green(), ssh_key_pair.public_key);
 
     match confirm_proceed(&target_device) {
         Ok(true) => {}
@@ -226,7 +234,17 @@ pub fn run_installer(params: HashMap<String, String>) {
         &password,
         &root_password_hash,
         &timezone_choice,
-    );
+        Some(&ssh_key_pair.public_key),
+    ).expect("Failed to setup chroot environment");
 
     println!("{}", "Gentoo installation on Raspberry Pi 5 completed successfully.".bold().green());
+    println!("{}\n{}\n{}\n{}\n{}\n{}\n{}",
+        "===========================================================================".bold().green(),
+        "Installation Completed Successfully!".bold().green(),
+        "===========================================================================".bold().green(),
+        "You can use the following private SSH key to connect to your Raspberry Pi:".bold().yellow(),
+        ssh_key_pair.private_key.bold().yellow(),
+        "===========================================================================".bold().green(),
+        "Keep this key secure and do not share it with others.".bold().red()
+    );
 }
