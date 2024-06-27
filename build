@@ -1,7 +1,13 @@
 #!/bin/bash
 
+# Variables
+SCRIPT_DIR="$PWD"
+REMOTE_HOST="192.168.50.11"
+REMOTE_USER="skywalker"
+REMOTE_PASSWORD="skywalker"
+REMOTE=false
+
 # Ensure the script is executed from the correct directory
-SCRIPT_DIR="/home/skywalker/programming/gentoo/arm64/raspberry_pi_5/pi_installer"
 cd "$SCRIPT_DIR"
 
 # Configuring Git user name and email globally
@@ -74,18 +80,12 @@ function run_remote_installer() {
 }
 
 # Check for the --remote argument
-REMOTE=false
 if [[ " $@ " =~ " --remote " ]]; then
     REMOTE=true
     echo "Remote execution enabled."
 fi
 
 if $REMOTE; then
-    # Define remote connection parameters
-    REMOTE_USER="skywalker"
-    REMOTE_HOST="192.168.50.11"
-    REMOTE_PASSWORD="skywalker"
-
     # Copy the binary to the remote system
     copy_to_remote "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PASSWORD" "./pi_installer_arm64"
 
