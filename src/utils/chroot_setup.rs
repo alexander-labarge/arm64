@@ -95,20 +95,37 @@ pub fn chroot_setup(
         return Err("Failed to set root password.".to_string());
     }
 
-    // Install NetworkManager and other essential packages
-    let install_packages_command = "USE=\"-modemmanager -ppp -gtk-doc -introspection -concheck\" emerge --verbose --autounmask-continue=y net-misc/networkmanager net-misc/openssh net-misc/chrony app-admin/sudo wget git parted curl tree vim neofetch";
-    if !execute_chroot_command(mount_dir, install_packages_command) {
-        return Err("Failed to install essential packages.".to_string());
+    // Packages to install
+    let packages = [
+        "net-misc/networkmanager",
+        "net-misc/openssh",
+        "net-misc/chrony",
+        "app-admin/sudo",
+        "wget",
+        "dev-vcs/git",
+        "sys-apps/parted",
+        "net-misc/curl",
+        "app-misc/tree",
+        "app-editors/vim",
+        "app-misc/neofetch"
+    ];
+
+    // Install packages
+    for package in &packages {
+        let install_package_command = format!("emerge --verbose --autounmask-continue=y {}", package);
+        if !execute_chroot_command(mount_dir, &install_package_command) {
+            return Err(format!("Failed to install package: {}", package));
+        }
     }
 
     // Enable NetworkManager
-    let enable_networkmanager_command = "systemctl enable NetworkManager";
+    let enable_networkmanager_command = "rc-update add NetworkManager default && rc-service NetworkManager start";
     if !execute_chroot_command(mount_dir, enable_networkmanager_command) {
         return Err("Failed to enable and start NetworkManager.".to_string());
     }
 
     // Enable sshd
-    let enable_sshd_command = "systemctl enable sshd";
+    let enable_sshd_command = "rc-update add sshd default && rc-service sshd start";
     if !execute_chroot_command(mount_dir, enable_sshd_command) {
         return Err("Failed to enable and start sshd.".to_string());
     }
@@ -126,7 +143,7 @@ pub fn chroot_setup(
     }
 
     // Enable chrony
-    let enable_chrony_command = "systemctl enable chronyd";
+    let enable_chrony_command = "rc-update add chronyd default && rc-service chronyd start";
     if !execute_chroot_command(mount_dir, enable_chrony_command) {
         return Err("Failed to enable and start chrony.".to_string());
     }
