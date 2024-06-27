@@ -12,6 +12,8 @@ pub fn create_partitions(target_drive: &str, boot_size: &str, swap_size: &str) {
     let mut child = Command::new("fdisk")
         .arg(target_drive)
         .stdin(Stdio::piped())
+        .stdout(Stdio::null())  // Suppress stdout
+        .stderr(Stdio::null())  // Suppress stderr
         .spawn()
         .expect("Failed to execute fdisk");
 
@@ -28,6 +30,6 @@ pub fn create_partitions(target_drive: &str, boot_size: &str, swap_size: &str) {
     if output.status.success() {
         println!("Partitions created successfully.");
     } else {
-        eprintln!("Failed to create partitions: {}", String::from_utf8_lossy(&output.stderr));
+        eprintln!("Failed to create partitions.");
     }
 }
