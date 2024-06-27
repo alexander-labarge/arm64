@@ -20,12 +20,7 @@ use crate::utils::{
 };
 
 fn confirm_proceed(target_device: &str, automate: bool) -> Result<bool, String> {
-    if automate {
-        println!("{}", "\nAutomated mode enabled. Proceeding without confirmation.".bold().green());
-        return Ok(true);
-    }
-
-    let mut input = String::new();
+    
     
     println!("{}", "\n=====================================================".bold().bright_black());
     println!("{}", format!("\nWARNING: This will destroy all data on the target drive: {}.", target_device).bold().yellow());
@@ -48,6 +43,13 @@ fn confirm_proceed(target_device: &str, automate: bool) -> Result<bool, String> 
             println!("{}", line.dimmed());
         }
     }
+
+    if automate {
+        println!("{}", "\nAutomated mode enabled. Proceeding without confirmation.".bold().green());
+        return Ok(true);
+    }
+
+    let mut input = String::new();
 
     println!("{}", "\nAre you sure you want to proceed? (y/N): ".bold().red());
     // Add answer in front of user input
@@ -154,15 +156,17 @@ pub fn run_installer(params: HashMap<String, String>) {
     println!("  {:<30} {}", "timezone".bold().green(), timezone_choice);
     println!("  {:<30} {}", "ssh_key".bold().green(), ssh_key);
 
-    match confirm_proceed(&target_device, automate) {
-        Ok(true) => {}
-        Ok(false) => {
-            println!("Operation aborted.");
-            return;
-        }
-        Err(e) => {
-            eprintln!("{}", e.bold().red());
-            return;
+    if !automate {
+        match confirm_proceed(&target_device, automate) {
+            Ok(true) => {}
+            Ok(false) => {
+                println!("Operation aborted.");
+                return;
+            }
+            Err(e) => {
+                eprintln!("{}", e.bold().red());
+                return;
+            }
         }
     }
 
