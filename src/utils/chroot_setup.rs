@@ -1,5 +1,4 @@
 use std::process::Command;
-// use crate::utils::ssh_setup::add_ssh_key;
 
 pub fn chroot_setup(
     mount_dir: &str,
@@ -8,7 +7,6 @@ pub fn chroot_setup(
     password: &str,
     root_password_hash: &str,
     timezone_choice: &str,
-    // ssh_key: Option<&str>,
 ) -> Result<String, String> {
     println!("Setting up chroot environment...");
 
@@ -27,13 +25,13 @@ pub fn chroot_setup(
         return Err("Failed to mount /proc.".to_string());
     }
 
-    // Mount /sys
-    if !mount_fs("sys", "/sys", &sys_path) || !make_rslave(&sys_path) {
+    // Mount /sys with rbind and make-rslave
+    if !mount_rbind_and_rslave("/sys", &sys_path) {
         return Err("Failed to mount /sys or make it rslave.".to_string());
     }
 
-    // Mount /dev
-    if !mount_fs("dev", "/dev", &dev_path) || !make_rslave(&dev_path) {
+    // Mount /dev with rbind and make-rslave
+    if !mount_rbind_and_rslave("/dev", &dev_path) {
         return Err("Failed to mount /dev or make it rslave.".to_string());
     }
 
@@ -68,12 +66,6 @@ pub fn chroot_setup(
         }
     }
 
-    // // Add provided SSH key if any
-    // if let Some(key) = ssh_key {
-    //     add_ssh_key(mount_dir, username, key)?;
-    //     println!("Provided SSH key added to authorized_keys.");
-    // }
-
     Ok(String::new())
 }
 
@@ -100,7 +92,15 @@ fn mount_fs(fs_type: &str, source: &str, target: &str) -> bool {
         .arg(target)
         .output()
     {
-        Ok(output) => output.status.success(),
+        Ok(output) => {
+            if output.status.success() {
+                println!("Mounted {} to {} successfully.", source, target);
+                true
+            } else {
+                eprintln!("Failed to mount {} to {}: {}", source, target, String::from_utf8_lossy(&output.stderr));
+                false
+            }
+        },
         Err(e) => {
             eprintln!("Error mounting {}: {}", fs_type, e);
             false
@@ -108,21 +108,41 @@ fn mount_fs(fs_type: &str, source: &str, target: &str) -> bool {
     }
 }
 
-fn make_rslave(target: &str) -> bool {
-    match Command::new("mount")
+fn mount_rbind_and_rslave(source: &str, target: &str) -> bool {
+    let rbind_status = Command::new("mount")
+        .arg("--rbind")
+        .arg(source)
+        .arg(target)
+        .output();
+
+    match rbind_status {
+        Ok(output) => {
+            if !output.status.success() {
+                eprintln!("Failed to rbind mount {} to {}: {}", source, target, String::from_utf8_lossy(&output.stderr));
+                return false;
+            }
+        },
+        Err(e) => {
+            eprintln!("Error rbind mounting {}: {}", source, e);
+            return false;
+        }
+    }
+
+    let rslave_status = Command::new("mount")
         .arg("--make-rslave")
         .arg(target)
-        .output()
-    {
+        .output();
+
+    match rslave_status {
         Ok(output) => {
             if output.status.success() {
-                println!("{} made rslave successfully.", target);
+                println!("Mounted {} and made rslave successfully.", target);
                 true
             } else {
                 eprintln!("Failed to make {} rslave: {}", target, String::from_utf8_lossy(&output.stderr));
                 false
             }
-        }
+        },
         Err(e) => {
             eprintln!("Error making {} rslave: {}", target, e);
             false
@@ -138,7 +158,15 @@ fn execute_chroot_command(mount_dir: &str, command: &str) -> bool {
         .arg(command)
         .output()
     {
-        Ok(output) => output.status.success(),
+        Ok(output) => {
+            if output.status.success() {
+                println!("Command '{}' executed successfully in chroot.", command);
+                true
+            } else {
+                eprintln!("Failed to execute chroot command '{}': {}", command, String::from_utf8_lossy(&output.stderr));
+                false
+            }
+        },
         Err(e) => {
             eprintln!("Error executing chroot command '{}': {}", command, e);
             false
