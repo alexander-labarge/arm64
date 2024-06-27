@@ -8,10 +8,13 @@ pub fn copy_firmware(mount_dir: &str) {
     let firmware_dir = format!("{}/lib/firmware", mount_dir);
     let brcm_firmware_dir = format!("{}/brcm", firmware_dir);
 
+    // Clone WiFi firmware repository
+    let wifi_firmware_clone_dir = format!("{}/firmware-nonfree", mount_dir);
     let git_clone_wifi_output = Command::new("git")
         .arg("clone")
         .arg("--depth=1")
         .arg(wifi_firmware_repo)
+        .arg(&wifi_firmware_clone_dir)
         .output()
         .expect("Failed to execute git clone for WiFi firmware");
 
@@ -22,23 +25,35 @@ pub fn copy_firmware(mount_dir: &str) {
 
     std::fs::create_dir_all(&brcm_firmware_dir).expect("Failed to create brcm firmware directory");
 
-    let cp_wifi_output = Command::new("cp")
-        .arg("firmware-nonfree/debian/config/brcm80211/cypress/cyfmac43455-sdio-standard.bin")
-        .arg(&brcm_firmware_dir)
-        .output()
-        .expect("Failed to copy WiFi firmware");
+    let cp_wifi_firmware_files = [
+        "debian/config/brcm80211/cypress/cyfmac43455-sdio-standard.bin",
+        "debian/config/brcm80211/cypress/cyfmac43455-sdio.clm_blob",
+        "debian/config/brcm80211/brcm/brcmfmac43455-sdio.txt"
+    ];
 
-    if cp_wifi_output.status.success() {
-        println!("WiFi firmware copied successfully.");
-    } else {
-        eprintln!("Failed to copy WiFi firmware: {}", String::from_utf8_lossy(&cp_wifi_output.stderr));
-        exit(1);
+    for file in &cp_wifi_firmware_files {
+        let src = format!("{}/{}", wifi_firmware_clone_dir, file);
+        let cp_wifi_output = Command::new("cp")
+            .arg(&src)
+            .arg(&brcm_firmware_dir)
+            .output()
+            .expect("Failed to copy WiFi firmware");
+
+        if cp_wifi_output.status.success() {
+            println!("WiFi firmware copied successfully: {}", src);
+        } else {
+            eprintln!("Failed to copy WiFi firmware: {}", String::from_utf8_lossy(&cp_wifi_output.stderr));
+            exit(1);
+        }
     }
 
+    // Clone Bluetooth firmware repository
+    let bluetooth_firmware_clone_dir = format!("{}/bluez-firmware", mount_dir);
     let git_clone_bt_output = Command::new("git")
         .arg("clone")
         .arg("--depth=1")
         .arg(bluetooth_firmware_repo)
+        .arg(&bluetooth_firmware_clone_dir)
         .output()
         .expect("Failed to execute git clone for Bluetooth firmware");
 
@@ -48,7 +63,7 @@ pub fn copy_firmware(mount_dir: &str) {
     }
 
     let cp_bt_output = Command::new("cp")
-        .arg("bluez-firmware/debian/firmware/broadcom/BCM4345C0.hcd")
+        .arg(format!("{}/debian/firmware/broadcom/BCM4345C0.hcd", bluetooth_firmware_clone_dir))
         .arg(&brcm_firmware_dir)
         .output()
         .expect("Failed to copy Bluetooth firmware");

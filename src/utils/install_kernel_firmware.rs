@@ -1,4 +1,5 @@
 use std::process::{Command, exit};
+use std::fs;
 
 pub fn install_kernel_firmware(mount_dir: &str, target_drive: &str) {
     println!("Installing kernel and firmware...");
@@ -13,7 +14,6 @@ pub fn install_kernel_firmware(mount_dir: &str, target_drive: &str) {
     let firmware_repo = "https://github.com/raspberrypi/firmware";
     let firmware_dir = format!("{}/firmware", mount_dir);
     let boot_dir = format!("{}/boot", mount_dir);
-    let boot_firmware_dir = format!("{}/firmware", boot_dir);
 
     // Create the /boot directory within the mount directory if it doesn't exist
     let mkdir_boot_output = Command::new("mkdir")
@@ -68,33 +68,53 @@ pub fn install_kernel_firmware(mount_dir: &str, target_drive: &str) {
         exit(1);
     }
 
-    // Create the /boot/firmware directory
-    let mkdir_boot_firmware_output = Command::new("mkdir")
-        .arg("-p")
-        .arg(&boot_firmware_dir)
-        .output()
-        .expect("Failed to create /boot/firmware directory");
-
-    if !mkdir_boot_firmware_output.status.success() {
-        eprintln!("Failed to create /boot/firmware directory: {}", String::from_utf8_lossy(&mkdir_boot_firmware_output.stderr));
+    // Verify the cloned directory exists and has the expected structure
+    let cloned_boot_dir = format!("{}/boot", firmware_dir);
+    if !fs::metadata(&cloned_boot_dir).is_ok() {
+        eprintln!("Cloned firmware directory does not contain the expected 'boot' subdirectory.");
         exit(1);
     }
 
-    // Copy all firmware files to /boot/firmware
-    // this is a tricky one - look at the repo and notice the boot directory 
-    // which makes this more confusing than it needs to be
-    // https://github.com/raspberrypi/firmware/tree/master/boot
-    let cp_firmware_output = Command::new("cp")
-        .arg("-r")
-        .arg(format!("{}/boot/*", firmware_dir))
-        .arg(&boot_firmware_dir)
-        .output()
-        .expect("Failed to execute cp for firmware files");
+    // Copy the necessary firmware files to /boot
+    let firmware_files = [
+        "bcm2712-rpi-5-b.dtb",
+        "fixup_cd.dat",
+        "fixup.dat",
+        "start_cd.elf",
+        "start.elf",
+        "bootcode.bin",
+        "kernel8.img"
+    ];
 
-    if cp_firmware_output.status.success() {
-        println!("Firmware files copied successfully.");
+    for file in &firmware_files {
+        let src = format!("{}/{}", cloned_boot_dir, file);
+        let dst = format!("{}/{}", boot_dir, file);
+        let cp_output = Command::new("cp")
+            .arg(&src)
+            .arg(&dst)
+            .output()
+            .expect("Failed to execute cp");
+
+        if cp_output.status.success() {
+            println!("Copied {} successfully.", file);
+        } else {
+            eprintln!("Failed to copy {}: {}", file, String::from_utf8_lossy(&cp_output.stderr));
+            exit(1);
+        }
+    }
+
+    // Copy overlays directory
+    let cp_overlays_output = Command::new("cp")
+        .arg("-r")
+        .arg(format!("{}/overlays", cloned_boot_dir))
+        .arg(boot_dir)
+        .output()
+        .expect("Failed to execute cp for overlays");
+
+    if cp_overlays_output.status.success() {
+        println!("Overlay files copied successfully.");
     } else {
-        eprintln!("Failed to copy firmware files: {}", String::from_utf8_lossy(&cp_firmware_output.stderr));
+        eprintln!("Failed to copy overlay files: {}", String::from_utf8_lossy(&cp_overlays_output.stderr));
         exit(1);
     }
 
