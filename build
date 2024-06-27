@@ -2,9 +2,10 @@
 
 # Variables
 SCRIPT_DIR="$PWD"
-REMOTE_HOST="192.168.50.11"
+REMOTE_HOST="pi5.asuscomm.com"
+REMOTE_PORT="2221"
 REMOTE_USER="skywalker"
-REMOTE_PASSWORD="skywalker"
+REMOTE_PASSWORD='\$qLHmo55Z+30' # Properly quoted to handle special characters
 REMOTE=false
 
 # Ensure the script is executed from the correct directory
@@ -60,23 +61,25 @@ tally_lines_of_code
 function copy_to_remote() {
     local remote_user=$1
     local remote_host=$2
-    local remote_password=$3
-    local binary_path=$4
+    local remote_port=$3
+    local remote_password=$4
+    local binary_path=$5
 
     echo "Copying the binary to the remote system..."
-    sshpass -p "$remote_password" scp "$binary_path" "$remote_user@$remote_host:/home/$remote_user/"
+    sshpass -p "$remote_password" scp -P "$remote_port" "$binary_path" "$remote_user@$remote_host:/home/$remote_user/"
 }
 
 # Function to run the binary on the remote system
 function run_remote_installer() {
     local remote_user=$1
     local remote_host=$2
-    local remote_password=$3
-    local installer_binary=$4
-    local installer_params="${@:5}"
+    local remote_port=$3
+    local remote_password=$4
+    local installer_binary=$5
+    local installer_params="${@:6}"
 
     echo "Executing the installer on the remote system..."
-    sshpass -p "$remote_password" ssh -o StrictHostKeyChecking=no "$remote_user@$remote_host" "cd /home/$remote_user && sudo ./$installer_binary $installer_params"
+    sshpass -p "$remote_password" ssh -p "$remote_port" -o StrictHostKeyChecking=no "$remote_user@$remote_host" "cd /home/$remote_user && sudo ./$installer_binary $installer_params"
 }
 
 # Check for the --remote argument
@@ -87,10 +90,10 @@ fi
 
 if $REMOTE; then
     # Copy the binary to the remote system
-    copy_to_remote "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PASSWORD" "./pi_installer_arm64"
+    copy_to_remote "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PORT" "$REMOTE_PASSWORD" "./pi_installer_arm64"
 
     # Run the installer on the remote system
-    run_remote_installer "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PASSWORD" "pi_installer_arm64" "${@:1:$#-1}"
+    run_remote_installer "$REMOTE_USER" "$REMOTE_HOST" "$REMOTE_PORT" "$REMOTE_PASSWORD" "pi_installer_arm64" "${@:1:$#-1}"
 else
     # Testing the pi_installer with sudo and --help for the detected architecture
     ARCH=$(uname -m)
