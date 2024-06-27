@@ -1,4 +1,39 @@
 use std::process::Command;
+use std::ops::Drop;
+
+struct MountGuard {
+    proc_path: String,
+    sys_path: String,
+    dev_path: String,
+}
+
+impl MountGuard {
+    fn new(mount_dir: &str) -> MountGuard {
+        MountGuard {
+            proc_path: format!("{}/proc", mount_dir),
+            sys_path: format!("{}/sys", mount_dir),
+            dev_path: format!("{}/dev", mount_dir),
+        }
+    }
+
+    fn unmount(&self) {
+        let _ = Command::new("umount")
+            .arg(&self.proc_path)
+            .output();
+        let _ = Command::new("umount")
+            .arg(&self.sys_path)
+            .output();
+        let _ = Command::new("umount")
+            .arg(&self.dev_path)
+            .output();
+    }
+}
+
+impl Drop for MountGuard {
+    fn drop(&mut self) {
+        self.unmount();
+    }
+}
 
 pub fn chroot_setup(
     mount_dir: &str,
@@ -10,10 +45,12 @@ pub fn chroot_setup(
 ) -> Result<String, String> {
     println!("Setting up chroot environment...");
 
+    let mount_guard = MountGuard::new(mount_dir);
+
     let resolv_conf_path = format!("{}/etc/resolv.conf", mount_dir);
-    let proc_path = format!("{}/proc", mount_dir);
-    let sys_path = format!("{}/sys", mount_dir);
-    let dev_path = format!("{}/dev", mount_dir);
+    let proc_path = &mount_guard.proc_path;
+    let sys_path = &mount_guard.sys_path;
+    let dev_path = &mount_guard.dev_path;
 
     // Copy resolv.conf
     if !copy_resolv_conf(&resolv_conf_path) {
@@ -21,17 +58,17 @@ pub fn chroot_setup(
     }
 
     // Mount /proc
-    if !mount_fs("proc", "/proc", &proc_path) {
+    if !mount_fs("proc", "/proc", proc_path) {
         return Err("Failed to mount /proc.".to_string());
     }
 
     // Mount /sys with rbind and make-rslave
-    if !mount_rbind_and_rslave("/sys", &sys_path) {
+    if !mount_rbind_and_rslave("/sys", sys_path) {
         return Err("Failed to mount /sys or make it rslave.".to_string());
     }
 
     // Mount /dev with rbind and make-rslave
-    if !mount_rbind_and_rslave("/dev", &dev_path) {
+    if !mount_rbind_and_rslave("/dev", dev_path) {
         return Err("Failed to mount /dev or make it rslave.".to_string());
     }
 

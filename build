@@ -5,7 +5,7 @@ SCRIPT_DIR="$PWD"
 REMOTE_HOST="pi5.asuscomm.com"
 REMOTE_PORT="2221"
 REMOTE_USER="skywalker"
-REMOTE_PASSWORD='\$qLHmo55Z+30' # Properly quoted to handle special characters
+REMOTE_PASSWORD='Skywalker123!' # Properly quoted to handle special characters
 REMOTE=false
 
 # Ensure the script is executed from the correct directory
